@@ -93,7 +93,7 @@ setup(
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
-    url='https://github.com/sdv-dev/CTGAN',
+    url='https://github.com/sbuttler/CTGAN',
     version='0.2.2.dev0',
     zip_safe=False,
 )
