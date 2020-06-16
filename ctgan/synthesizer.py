@@ -235,8 +235,8 @@ class CTGANSynthesizer(object):
             if (i+1)%5 == 0:
                 eval_sample = self.sample(1000)
                 sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
-                sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4)
-                pd.DataFrame(train, columns=all_columns).loc[:, self.demand_column].hist(bins=50, alpha=0.4)
+                sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4, label= 'fake')
+                pd.DataFrame(train, columns=all_columns).loc[:, self.demand_column].hist(bins=50, alpha=0.4, label='real')
                 plt.show()
 
 
