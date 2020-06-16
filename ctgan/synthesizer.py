@@ -3,6 +3,9 @@ import torch
 from torch import optim
 from torch.nn import functional
 
+import pandas as pd
+import matplotlib.pyplot as plt
+
 from ctgan.conditional import ConditionalGenerator
 from ctgan.models import Discriminator, Generator
 from ctgan.sampler import Sampler
@@ -33,7 +36,7 @@ class CTGANSynthesizer(object):
             Number of data samples to process in each step.
     """
 
-    def __init__(self, embedding_dim=128, gen_dim=(256, 256), dis_dim=(256, 256),
+    def __init__(self, demand_col, embedding_dim=128, gen_dim=(256, 256), dis_dim=(256, 256),
                  l2scale=1e-6, batch_size=500):
 
         self.embedding_dim = embedding_dim
@@ -43,6 +46,7 @@ class CTGANSynthesizer(object):
         self.l2scale = l2scale
         self.batch_size = batch_size
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.demand_column = demand_col
 
     def _apply_activate(self, data):
         data_t = []
@@ -225,6 +229,18 @@ class CTGANSynthesizer(object):
                   (i + 1, loss_g.detach().cpu(), loss_d.detach().cpu()),
                   flush=True)
 
+            #check model results every 5 epochs
+
+            if (i+1)%5 == 0:
+                eval_sample = self.sample(1000)
+                sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
+                sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4)
+                pd.DataFrame(train_data, columns=train_data.columns).loc[:, self.demand_column].hist(bins=50, alpha=0.4)
+                plt.show()
+
+
+
+
     def sample(self, n):
         """Sample data similar to the training data.
 
@@ -236,6 +252,7 @@ class CTGANSynthesizer(object):
             numpy.ndarray or pandas.DataFrame
         """
 
+        self.generator.eval()
         steps = n // self.batch_size + 1
         data = []
         np.random.seed(0)
@@ -258,5 +275,7 @@ class CTGANSynthesizer(object):
 
         data = np.concatenate(data, axis=0)
         data = data[:n]
+
+        self.generator.train()
 
         return self.transformer.inverse_transform(data, None)
