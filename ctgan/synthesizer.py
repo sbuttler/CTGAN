@@ -99,7 +99,7 @@ class CTGANSynthesizer(object):
 
         return (loss * m).sum() / data.size()[0]
 
-    def fit(self, train_data, discrete_columns=tuple(), epochs=300, log_frequency=True):
+    def fit(self, train_data, all_columns, discrete_columns=tuple(), epochs=300, log_frequency=True):
         """Fit the CTGAN Synthesizer models to the training data.
 
         Args:
@@ -235,7 +235,7 @@ class CTGANSynthesizer(object):
                 eval_sample = self.sample(1000)
                 sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
                 sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4)
-                pd.DataFrame(train_data, columns=train_data.columns).loc[:, self.demand_column].hist(bins=50, alpha=0.4)
+                pd.DataFrame(train_data, columns=all_columns).loc[:, self.demand_column].hist(bins=50, alpha=0.4)
                 plt.show()
 
 
