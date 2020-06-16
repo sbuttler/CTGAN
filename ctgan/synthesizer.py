@@ -118,6 +118,7 @@ class CTGANSynthesizer(object):
                 sampling. Defaults to ``True``.
         """
 
+        train = train_data
         self.transformer = DataTransformer()
         self.transformer.fit(train_data, discrete_columns)
         train_data = self.transformer.transform(train_data)
@@ -235,7 +236,7 @@ class CTGANSynthesizer(object):
                 eval_sample = self.sample(1000)
                 sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
                 sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4)
-                pd.DataFrame(train_data, columns=all_columns).loc[:, self.demand_column].hist(bins=50, alpha=0.4)
+                pd.DataFrame(train, columns=all_columns).loc[:, self.demand_column].hist(bins=50, alpha=0.4)
                 plt.show()
 
 
