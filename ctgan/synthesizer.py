@@ -138,7 +138,7 @@ class CTGANSynthesizer(object):
             data_dim
         ).to(self.device)
 
-        discriminator = Discriminator(
+        self.discriminator = Discriminator(
             data_dim + self.cond_generator.n_opt,
             self.dis_dim
         ).to(self.device)
@@ -147,7 +147,7 @@ class CTGANSynthesizer(object):
             self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9),
             weight_decay=self.l2scale
         )
-        optimizerD = optim.Adam(discriminator.parameters(), lr=2e-4, betas=(0.5, 0.9))
+        optimizerD = optim.Adam(self.discriminator.parameters(), lr=2e-4, betas=(0.5, 0.9))
 
         assert self.batch_size % 2 == 0
         mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)
@@ -189,10 +189,10 @@ class CTGANSynthesizer(object):
                     real_cat = real
                     fake_cat = fake
 
-                y_fake = discriminator(fake_cat)
-                y_real = discriminator(real_cat)
+                y_fake = self.discriminator(fake_cat)
+                y_real = self.discriminator(real_cat)
 
-                pen = discriminator.calc_gradient_penalty(real_cat, fake_cat, self.device)
+                pen = self.discriminator.calc_gradient_penalty(real_cat, fake_cat, self.device)
                 loss_d = -(torch.mean(y_real) - torch.mean(y_fake))
 
                 optimizerD.zero_grad()
@@ -215,9 +215,9 @@ class CTGANSynthesizer(object):
                 fakeact = self._apply_activate(fake)
 
                 if c1 is not None:
-                    y_fake = discriminator(torch.cat([fakeact, c1], dim=1))
+                    y_fake = self.discriminator(torch.cat([fakeact, c1], dim=1))
                 else:
-                    y_fake = discriminator(fakeact)
+                    y_fake = self.discriminator(fakeact)
 
                 if condvec is None:
                     cross_entropy = 0
@@ -229,6 +229,8 @@ class CTGANSynthesizer(object):
                 optimizerG.zero_grad()
                 loss_g.backward()
                 optimizerG.step()
+
+                self.generator.state_dict()
 
             print("Epoch %d, Loss G: %.4f, Loss D: %.4f" %
                   (i + 1, loss_g.detach().cpu(), loss_d.detach().cpu()),
