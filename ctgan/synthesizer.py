@@ -153,6 +153,7 @@ class CTGANSynthesizer(object):
         mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)
         std = mean + 1
 
+        stat_real = train[self.demand_column].describe()
         stats_real_week = train.groupby('Weekday')[self.demand_column].describe()
         stats_real_month = train.groupby('Month')[self.demand_column].describe()
 
@@ -243,7 +244,10 @@ class CTGANSynthesizer(object):
                 plt.legend()
                 plt.show()
 
+                print((sample[self.demand_column].describe()-stats_real)/stats_real)
+                print(' ')
                 print(((sample.groupby('Weekday')[self.demand_column].describe() - stats_real_week)/stats_real_week).T)
+                print(' ')
                 print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)
 
 
