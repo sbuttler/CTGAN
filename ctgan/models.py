@@ -49,7 +49,7 @@ class Residual(Module):
         super(Residual, self).__init__()
         self.fc = Linear(i, o)
         self.bn = BatchNorm1d(o)
-        self.relu = ReLU()
+        self.relu = LeakyReLU(0.2)
 
     def forward(self, input):
         out = self.fc(input)
