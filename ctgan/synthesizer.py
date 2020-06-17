@@ -153,6 +153,9 @@ class CTGANSynthesizer(object):
         mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)
         std = mean + 1
 
+        stats_real_week = train.groupby('Week')[self.demand_column].describe()
+        stats_real_month = train.groupby('Month')[self.demand_column].describe()
+
         steps_per_epoch = max(len(train_data) // self.batch_size, 1)
         for i in range(epochs):
             for id_ in range(steps_per_epoch):
@@ -239,6 +242,9 @@ class CTGANSynthesizer(object):
                 pd.DataFrame(train, columns=all_columns).loc[:, self.demand_column].hist(bins=50, alpha=0.4, label='real')
                 plt.legend()
                 plt.show()
+
+                print(((sample.groupby('Week')[self.demand_column].describe() - stats_real_week)/stats_real_week).T)
+                print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)
 
 
 
