@@ -279,15 +279,15 @@ class CTGANSynthesizer(object):
 
 
             #check model results every x epochs
-            fig2, ax3 = plt.subplots(1)
+            #fig2, ax3 = plt.subplots(1)
 
             if (i+1)%eval_interval == 0:
                 eval_sample = self.sample(1000)
                 sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
-                sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4, label= 'fake')
-                ax3.hist(pd.DataFrame(train, columns=train.columns).loc[:, self.demand_column], bins=50, alpha=0.4, label='real')
-                fig2.legend()
-                fig2.show()
+                #sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4, label='fake')
+                #ax3.hist(pd.DataFrame(train, columns=train.columns).loc[:, self.demand_column], bins=50, alpha=0.4, label='real')
+                #fig2.legend()
+                #fig2.show()
 
                 print((sample[self.demand_column].describe()-stats_real)/stats_real)
                 print(' ')
@@ -295,7 +295,7 @@ class CTGANSynthesizer(object):
                 print(' ')
                 print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)
 
-        fig.show()
+        plt.show()
 
 
 
