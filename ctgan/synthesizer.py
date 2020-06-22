@@ -120,7 +120,7 @@ class CTGANSynthesizer(object):
         axis.hlines(0, 0, len(ave_grads) + 1, lw=2, color="k")
         axis.set_xticklabels(layers, rotation="vertical")
         axis.set_xlim(left=0, right=len(ave_grads))
-        axis.set_ylim(bottom=-0.001, top=0.2)  # zoom in on the lower gradient regions
+        axis.set_ylim(bottom=-0.001, top=0.4)  # zoom in on the lower gradient regions
         axis.set_xlabel("Layers")
         axis.set_ylabel("average gradient")
         axis.set_title(plot_title)
