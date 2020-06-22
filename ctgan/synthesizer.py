@@ -293,6 +293,8 @@ class CTGANSynthesizer(object):
                 print(' ')
                 print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)
 
+        plt.show()
+
 
 
 
