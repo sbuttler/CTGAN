@@ -101,7 +101,7 @@ class CTGANSynthesizer(object):
 
         return (loss * m).sum() / data.size()[0]
 
-    def plot_grad_flow(named_parameters, axis, plot_title):
+    def plot_grad_flow(self, named_parameters, axis, plot_title):
         '''Plots the gradients flowing through different layers in the net during training.
         Can be used for checking for possible gradient vanishing / exploding problems.
 
