@@ -277,6 +277,7 @@ class CTGANSynthesizer(object):
                   (i + 1, loss_g.detach().cpu(), loss_d.detach().cpu()),
                   flush=True)
 
+            '''
             #check model results every x epochs
 
             if (i+1)%eval_interval == 0:
@@ -291,7 +292,7 @@ class CTGANSynthesizer(object):
                 print(' ')
                 print(((sample.groupby('Weekday')[self.demand_column].describe() - stats_real_week)/stats_real_week).T)
                 print(' ')
-                print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)
+                print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)'''
 
         plt.show()
 
