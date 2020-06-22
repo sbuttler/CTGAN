@@ -128,7 +128,7 @@ class CTGANSynthesizer(object):
         axis.legend([Line2D([0], [0], color="c", lw=4),
                     Line2D([0], [0], color="b", lw=4),
                     Line2D([0], [0], color="k", lw=4)],
-                   ['max-gradient', 'mean-gradient', 'zero-gradient'])
+                   ['max-gradient', 'mean-gradient', 'zero-gradient'], loc='upper left')
 
     def fit(self, train_data, eval_interval, discrete_columns=tuple(), epochs=300, log_frequency=True):
         """Fit the CTGAN Synthesizer models to the training data.
@@ -277,24 +277,25 @@ class CTGANSynthesizer(object):
                   (i + 1, loss_g.detach().cpu(), loss_d.detach().cpu()),
                   flush=True)
 
-            '''
+
             #check model results every x epochs
+            fig2, ax3 = plt.subplots(1)
 
             if (i+1)%eval_interval == 0:
                 eval_sample = self.sample(1000)
                 sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
                 sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4, label= 'fake')
-                pd.DataFrame(train, columns=train.columns).loc[:, self.demand_column].hist(bins=50, alpha=0.4, label='real')
-                plt.legend()
-                plt.show()
+                ax3.hist(pd.DataFrame(train, columns=train.columns).loc[:, self.demand_column], bins=50, alpha=0.4, label='real')
+                fig2.legend()
+                fig2.show()
 
                 print((sample[self.demand_column].describe()-stats_real)/stats_real)
                 print(' ')
                 print(((sample.groupby('Weekday')[self.demand_column].describe() - stats_real_week)/stats_real_week).T)
                 print(' ')
-                print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)'''
+                print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)
 
-        plt.show()
+        fig.show()
 
 
 
