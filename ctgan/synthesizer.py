@@ -5,6 +5,8 @@ from torch.nn import functional
 
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import numpy as np
 
 from ctgan.conditional import ConditionalGenerator
 from ctgan.models import Discriminator, Generator
@@ -99,6 +101,35 @@ class CTGANSynthesizer(object):
 
         return (loss * m).sum() / data.size()[0]
 
+    def plot_grad_flow(named_parameters, axis, plot_title):
+        '''Plots the gradients flowing through different layers in the net during training.
+        Can be used for checking for possible gradient vanishing / exploding problems.
+
+        Usage: Plug this function in Trainer class after loss.backwards() as
+        "plot_grad_flow(self.model.named_parameters())" to visualize the gradient flow'''
+        ave_grads = []
+        max_grads = []
+        layers = []
+        for n, p in named_parameters:
+            if (p.requires_grad) and ("bias" not in n):
+                layers.append(n)
+                ave_grads.append(p.grad.abs().mean())
+                max_grads.append(p.grad.abs().max())
+        axis.bar(np.arange(len(max_grads)), max_grads, alpha=0.1, lw=1, color="c")
+        axis.bar(np.arange(len(max_grads)), ave_grads, alpha=0.1, lw=1, color="b")
+        axis.hlines(0, 0, len(ave_grads) + 1, lw=2, color="k")
+        axis.set_xticklabels(layers, rotation="vertical")
+        axis.set_xlim(left=0, right=len(ave_grads))
+        axis.set_ylim(bottom=-0.001, top=0.2)  # zoom in on the lower gradient regions
+        axis.set_xlabel("Layers")
+        axis.set_ylabel("average gradient")
+        axis.set_title(plot_title)
+        plt.grid(True)
+        axis.legend([Line2D([0], [0], color="c", lw=4),
+                    Line2D([0], [0], color="b", lw=4),
+                    Line2D([0], [0], color="k", lw=4)],
+                   ['max-gradient', 'mean-gradient', 'zero-gradient'])
+
     def fit(self, train_data, eval_interval, discrete_columns=tuple(), epochs=300, log_frequency=True):
         """Fit the CTGAN Synthesizer models to the training data.
 
@@ -157,6 +188,9 @@ class CTGANSynthesizer(object):
         stats_real_week = train.groupby('Weekday')[self.demand_column].describe()
         stats_real_month = train.groupby('Month')[self.demand_column].describe()
 
+        # figure for plotting gradients; ax1 for generator and ax2 for discriminator
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+
         steps_per_epoch = max(len(train_data) // self.batch_size, 1)
         for i in range(epochs):
             for id_ in range(steps_per_epoch):
@@ -198,6 +232,10 @@ class CTGANSynthesizer(object):
                 optimizerD.zero_grad()
                 pen.backward(retain_graph=True)
                 loss_d.backward()
+
+                #plot gradients
+                self.plot_grad_flow(self.discriminator.named_parameters(), ax2, 'Gradient flow for D')
+
                 optimizerD.step()
 
                 fakez = torch.normal(mean=mean, std=std)
@@ -228,15 +266,18 @@ class CTGANSynthesizer(object):
 
                 optimizerG.zero_grad()
                 loss_g.backward()
+
+                # plot gradients
+                self.plot_grad_flow(self.generator.named_parameters(), ax1, 'Gradient flow for G')
+
                 optimizerG.step()
 
-                self.generator.state_dict()
 
             print("Epoch %d, Loss G: %.4f, Loss D: %.4f" %
                   (i + 1, loss_g.detach().cpu(), loss_d.detach().cpu()),
                   flush=True)
 
-            #check model results every 5 epochs
+            #check model results every x epochs
 
             if (i+1)%eval_interval == 0:
                 eval_sample = self.sample(1000)
