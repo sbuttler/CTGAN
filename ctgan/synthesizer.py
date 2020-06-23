@@ -130,7 +130,7 @@ class CTGANSynthesizer(object):
                     Line2D([0], [0], color="k", lw=4)],
                    ['max-gradient', 'mean-gradient', 'zero-gradient'], loc='upper left')
 
-    def fit(self, train_data, eval_interval, discrete_columns=tuple(), epochs=300, log_frequency=True):
+    def fit(self, train_data, eval_interval, eval, discrete_columns=tuple(), epochs=300, log_frequency=True):
         """Fit the CTGAN Synthesizer models to the training data.
 
         Args:
@@ -281,7 +281,7 @@ class CTGANSynthesizer(object):
             #check model results every x epochs
             #fig2, ax3 = plt.subplots(1)
 
-            if (i+1)%eval_interval == 0:
+            if ((i+1)%eval_interval == 0) and eval:
                 eval_sample = self.sample(1000)
                 sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
                 #sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4, label='fake')
