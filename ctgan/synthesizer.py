@@ -184,9 +184,7 @@ class CTGANSynthesizer(object):
         mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)
         std = mean + 1
 
-        stats_real = train[self.demand_column].describe()
-        stats_real_week = train.groupby('Weekday')[self.demand_column].describe()
-        stats_real_month = train.groupby('Month')[self.demand_column].describe()
+
 
         # figure for plotting gradients; ax1 for generator and ax2 for discriminator
         fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -281,19 +279,24 @@ class CTGANSynthesizer(object):
             #check model results every x epochs
             #fig2, ax3 = plt.subplots(1)
 
-            if ((i+1)%eval_interval == 0) and eval:
-                eval_sample = self.sample(1000)
-                sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
-                #sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4, label='fake')
-                #ax3.hist(pd.DataFrame(train, columns=train.columns).loc[:, self.demand_column], bins=50, alpha=0.4, label='real')
-                #fig2.legend()
-                #fig2.show()
+            if eval:
+                stats_real = train[self.demand_column].describe()
+                stats_real_week = train.groupby('Weekday')[self.demand_column].describe()
+                stats_real_month = train.groupby('Month')[self.demand_column].describe()
 
-                print((sample[self.demand_column].describe()-stats_real)/stats_real)
-                print(' ')
-                print(((sample.groupby('Weekday')[self.demand_column].describe() - stats_real_week)/stats_real_week).T)
-                print(' ')
-                print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)
+                if ((i+1)%eval_interval == 0):
+                    eval_sample = self.sample(1000)
+                    sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
+                    #sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4, label='fake')
+                    #ax3.hist(pd.DataFrame(train, columns=train.columns).loc[:, self.demand_column], bins=50, alpha=0.4, label='real')
+                    #fig2.legend()
+                    #fig2.show()
+
+                    print((sample[self.demand_column].describe()-stats_real)/stats_real)
+                    print(' ')
+                    print(((sample.groupby('Weekday')[self.demand_column].describe() - stats_real_week)/stats_real_week).T)
+                    print(' ')
+                    print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)
 
         plt.show()
 
