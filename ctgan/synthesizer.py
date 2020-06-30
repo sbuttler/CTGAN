@@ -303,7 +303,7 @@ class CTGANSynthesizer(object):
 
 
 
-    def sample(self, n):
+    def sample(self, n, seed=0):
         """Sample data similar to the training data.
 
         Args:
@@ -317,7 +317,8 @@ class CTGANSynthesizer(object):
         self.generator.eval()
         steps = n // self.batch_size + 1
         data = []
-        np.random.seed(0)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
         for i in range(steps):
             mean = torch.zeros(self.batch_size, self.embedding_dim)
             std = mean + 1
@@ -338,6 +339,7 @@ class CTGANSynthesizer(object):
         data = np.concatenate(data, axis=0)
         data = data[:n]
 
+        # sets model back to training mode
         self.generator.train()
 
         return self.transformer.inverse_transform(data, None)
