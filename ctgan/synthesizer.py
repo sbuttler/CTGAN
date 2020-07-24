@@ -303,12 +303,16 @@ class CTGANSynthesizer(object):
 
 
 
-    def sample(self, n, seed=0):
+    def sample(self, n, condition=None, seed=0):
         """Sample data similar to the training data.
 
         Args:
             n (int):
                 Number of rows to sample.
+            condvec (Tuple):
+                Number of column and value of condition to sample
+            seed (int):
+                Seed to create result reproducibility
 
         Returns:
             numpy.ndarray or pandas.DataFrame
@@ -324,7 +328,15 @@ class CTGANSynthesizer(object):
             std = mean + 1
             fakez = torch.normal(mean=mean, std=std).to(self.device)
 
-            condvec = self.cond_generator.sample_zero(self.batch_size)
+            if condition is None:
+                #select random condition
+                condvec = self.cond_generator.sample_zero(self.batch_size)
+
+            else:
+
+                condvec = self.cond_generator.sample_condition(self.batch_size, condition, self.transformer)
+
+
             if condvec is None:
                 pass
             else:
@@ -333,7 +345,9 @@ class CTGANSynthesizer(object):
                 fakez = torch.cat([fakez, c1], dim=1)
 
             fake = self.generator(fakez)
+            print(fake)
             fakeact = self._apply_activate(fake)
+            print(fakeact)
             data.append(fakeact.detach().cpu().numpy())
 
         data = np.concatenate(data, axis=0)

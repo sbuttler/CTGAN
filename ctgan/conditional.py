@@ -97,3 +97,33 @@ class ConditionalGenerator(object):
             vec[i, pick + self.interval[col, 0]] = 1
 
         return vec
+
+    def sample_condition(self, batch, cond, transformer):
+        vec = np.zeros((batch, self.n_opt), dtype='float32')
+
+        col_name = cond[0]
+        col_value = cond[1]
+
+        col = -1
+        idx_meta = -1
+
+        for meta in transformer.meta:
+
+            if meta['output_info'][0][1] == 'tanh':
+                idx_meta += 1
+            elif meta['output_info'][0][1] == 'softmax':
+                idx_meta += 1
+                col += 1
+                if meta['name'] == col_name:
+                    break
+            else:
+                assert 0
+
+        for i in range(batch):
+            encoder = transformer.meta[idx_meta]['encoder']
+            encoded_value = encoder.transform(np.array(col_value).reshape(1,-1))
+            pick = np.argmax(encoded_value)
+
+            vec[i, pick + self.interval[col, 0]] = 1
+
+        return vec
