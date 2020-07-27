@@ -266,7 +266,7 @@ class CTGANSynthesizer(object):
                 loss_g.backward()
 
                 # plot gradients
-                self.plot_grad_flow(self.generator.named_parameters(), ax1, 'Gradient flow for G')
+                #self.plot_grad_flow(self.generator.named_parameters(), ax1, 'Gradient flow for G')
 
                 optimizerG.step()
 
