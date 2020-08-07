@@ -345,9 +345,7 @@ class CTGANSynthesizer(object):
                 fakez = torch.cat([fakez, c1], dim=1)
 
             fake = self.generator(fakez)
-            print(fake)
             fakeact = self._apply_activate(fake)
-            print(fakeact)
             data.append(fakeact.detach().cpu().numpy())
 
         data = np.concatenate(data, axis=0)
