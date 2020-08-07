@@ -187,7 +187,7 @@ class CTGANSynthesizer(object):
 
 
         # figure for plotting gradients; ax1 for generator and ax2 for discriminator
-        fig, (ax1, ax2) = plt.subplots(1, 2)
+        #fig, (ax1, ax2) = plt.subplots(1, 2)
 
         steps_per_epoch = max(len(train_data) // self.batch_size, 1)
         for i in range(epochs):
@@ -232,7 +232,7 @@ class CTGANSynthesizer(object):
                 loss_d.backward()
 
                 #plot gradients
-                self.plot_grad_flow(self.discriminator.named_parameters(), ax2, 'Gradient flow for D')
+                #self.plot_grad_flow(self.discriminator.named_parameters(), ax2, 'Gradient flow for D')
 
                 optimizerD.step()
 
@@ -266,7 +266,7 @@ class CTGANSynthesizer(object):
                 loss_g.backward()
 
                 # plot gradients
-                self.plot_grad_flow(self.generator.named_parameters(), ax1, 'Gradient flow for G')
+                #self.plot_grad_flow(self.generator.named_parameters(), ax1, 'Gradient flow for G')
 
                 optimizerG.step()
 
