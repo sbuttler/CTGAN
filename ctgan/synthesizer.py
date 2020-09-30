@@ -13,6 +13,8 @@ from ctgan.models import Discriminator, Generator
 from ctgan.sampler import Sampler
 from ctgan.transformer import DataTransformer
 
+import wandb
+
 
 class CTGANSynthesizer(object):
     """Conditional Table GAN Synthesizer.
@@ -130,7 +132,7 @@ class CTGANSynthesizer(object):
                     Line2D([0], [0], color="k", lw=4)],
                    ['max-gradient', 'mean-gradient', 'zero-gradient'], loc='upper left')
 
-    def fit(self, train_data, eval_interval, eval, discrete_columns=tuple(), epochs=300, log_frequency=True):
+    def fit(self, train_data, eval_interval, eval, checkpoint_path, discrete_columns=tuple(), epochs=300, log_frequency=True):
         """Fit the CTGAN Synthesizer models to the training data.
 
         Args:
@@ -169,16 +171,19 @@ class CTGANSynthesizer(object):
             data_dim
         ).to(self.device)
 
+        wandb.watch(self.generator, log='all')
+
         self.discriminator = Discriminator(
             data_dim + self.cond_generator.n_opt,
             self.dis_dim
         ).to(self.device)
+        wandb.watch(self.discriminator, log='all')
 
-        optimizerG = optim.Adam(
+        self.optimizerG = optim.Adam(
             self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9),
             weight_decay=self.l2scale
         )
-        optimizerD = optim.Adam(self.discriminator.parameters(), lr=2e-4, betas=(0.5, 0.9))
+        self.optimizerD = optim.Adam(self.discriminator.parameters(), lr=2e-4, betas=(0.5, 0.9))
 
         assert self.batch_size % 2 == 0
         mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)
@@ -227,14 +232,14 @@ class CTGANSynthesizer(object):
                 pen = self.discriminator.calc_gradient_penalty(real_cat, fake_cat, self.device)
                 loss_d = -(torch.mean(y_real) - torch.mean(y_fake))
 
-                optimizerD.zero_grad()
+                self.optimizerD.zero_grad()
                 pen.backward(retain_graph=True)
                 loss_d.backward()
 
                 #plot gradients
                 #self.plot_grad_flow(self.discriminator.named_parameters(), ax2, 'Gradient flow for D')
 
-                optimizerD.step()
+                self.optimizerD.step()
 
                 fakez = torch.normal(mean=mean, std=std)
                 condvec = self.cond_generator.sample(self.batch_size)
@@ -262,43 +267,30 @@ class CTGANSynthesizer(object):
 
                 loss_g = -torch.mean(y_fake) + cross_entropy
 
-                optimizerG.zero_grad()
+                self.optimizerG.zero_grad()
                 loss_g.backward()
 
                 # plot gradients
                 #self.plot_grad_flow(self.generator.named_parameters(), ax1, 'Gradient flow for G')
 
-                optimizerG.step()
+                self.optimizerG.step()
 
 
             print("Epoch %d, Loss G: %.4f, Loss D: %.4f" %
                   (i + 1, loss_g.detach().cpu(), loss_d.detach().cpu()),
                   flush=True)
 
+            wandb.log({'epoch': i+1, 'loss_D': loss_g.detach().cpu(), 'loss_G': loss_d.detach().cpu()})
 
-            #check model results every x epochs
-            #fig2, ax3 = plt.subplots(1)
-
-            if eval:
-                stats_real = train[self.demand_column].describe()
-                stats_real_week = train.groupby('Weekday')[self.demand_column].describe()
-                stats_real_month = train.groupby('Month')[self.demand_column].describe()
-
-                if ((i+1)%eval_interval == 0):
-                    eval_sample = self.sample(1000)
-                    sample = pd.DataFrame(eval_sample, columns=eval_sample.columns)
-                    #sample.loc[:, self.demand_column].hist(bins=50, alpha=0.4, label='fake')
-                    #ax3.hist(pd.DataFrame(train, columns=train.columns).loc[:, self.demand_column], bins=50, alpha=0.4, label='real')
-                    #fig2.legend()
-                    #fig2.show()
-
-                    print((sample[self.demand_column].describe()-stats_real)/stats_real)
-                    print(' ')
-                    print(((sample.groupby('Weekday')[self.demand_column].describe() - stats_real_week)/stats_real_week).T)
-                    print(' ')
-                    print(((sample.groupby('Month')[self.demand_column].describe() - stats_real_month) / stats_real_month).T)
-
-        plt.show()
+            # save model checkpoints every 5 epochs
+            if ((i + 1) % 5 == 0):
+                torch.save({
+                    'D_state_dict': self.discriminator.state_dict(),
+                    'G_state_dict': self.generator.state_dict(),
+                    'optimizerD_state_dict': self.optimizerD.state_dict(),
+                    'optimizerG_state_dict': self.optimizerG.state_dict()},
+                    checkpoint_path+'checkpoints_epoch_'+str(i+1))
+                wandb.save(checkpoint_path+'checkpoints_epoch_'+str(i+1))
 
 
 
