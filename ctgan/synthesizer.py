@@ -14,6 +14,7 @@ from ctgan.sampler import Sampler
 from ctgan.transformer import DataTransformer
 
 import wandb
+import os
 
 
 class CTGANSynthesizer(object):
@@ -171,13 +172,13 @@ class CTGANSynthesizer(object):
             data_dim
         ).to(self.device)
 
-        wandb.watch(self.generator, log='all')
+        #wandb.watch(self.generator, log='all')
 
         self.discriminator = Discriminator(
             data_dim + self.cond_generator.n_opt,
             self.dis_dim
         ).to(self.device)
-        wandb.watch(self.discriminator, log='all')
+        #wandb.watch(self.discriminator, log='all')
 
         self.optimizerG = optim.Adam(
             self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9),
