@@ -133,7 +133,7 @@ class CTGANSynthesizer(object):
                     Line2D([0], [0], color="k", lw=4)],
                    ['max-gradient', 'mean-gradient', 'zero-gradient'], loc='upper left')
 
-    def fit(self, train_data, eval_interval, eval, checkpoint_path, discrete_columns=tuple(), epochs=300, log_frequency=True):
+    def fit(self, train_data, eval_interval, eval, checkpoint_path, discrete_columns=tuple(), epochs=300, seed=0, log_frequency=True):
         """Fit the CTGAN Synthesizer models to the training data.
 
         Args:
@@ -151,6 +151,9 @@ class CTGANSynthesizer(object):
                 Whether to use log frequency of categorical levels in conditional
                 sampling. Defaults to ``True``.
         """
+
+        np.random.seed(seed)
+        torch.manual_seed(seed)
 
         train = train_data
         self.transformer = DataTransformer()
