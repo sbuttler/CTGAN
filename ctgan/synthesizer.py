@@ -287,7 +287,7 @@ class CTGANSynthesizer(object):
             wandb.log({'epoch': i+1, 'loss_D': loss_g.detach().cpu(), 'loss_G': loss_d.detach().cpu()})
 
             # save model checkpoints every 5 epochs
-            if ((i + 1) % 5 == 0):
+            if ((i + 1) % 10 == 0):
                 torch.save({
                     'D_state_dict': self.discriminator.state_dict(),
                     'G_state_dict': self.generator.state_dict(),
