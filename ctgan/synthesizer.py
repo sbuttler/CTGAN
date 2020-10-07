@@ -42,13 +42,16 @@ class CTGANSynthesizer(object):
     """
 
     def __init__(self, demand_col, embedding_dim=128, gen_dim=(256, 256), dis_dim=(256, 256),
-                 l2scale=1e-6, batch_size=500):
+                 lr_G=2e-4, lr_D=2e-4, l2scale=1e-6, batch_size=500):
 
         self.embedding_dim = embedding_dim
         self.gen_dim = gen_dim
         self.dis_dim = dis_dim
 
         self.l2scale = l2scale
+        self.lr_G = lr_G
+        self.lr_D = lr_D
+
         self.batch_size = batch_size
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.demand_column = demand_col
@@ -133,7 +136,7 @@ class CTGANSynthesizer(object):
                     Line2D([0], [0], color="k", lw=4)],
                    ['max-gradient', 'mean-gradient', 'zero-gradient'], loc='upper left')
 
-    def fit(self, train_data, eval_interval, eval, checkpoint_path, discrete_columns=tuple(), epochs=300, seed=0, log_frequency=True):
+    def fit(self, train_data, checkpoint_interval, checkpoint_path, discrete_columns=tuple(), epochs=300, seed=0, log_frequency=True):
         """Fit the CTGAN Synthesizer models to the training data.
 
         Args:
@@ -155,7 +158,6 @@ class CTGANSynthesizer(object):
         np.random.seed(seed)
         torch.manual_seed(seed)
 
-        train = train_data
         self.transformer = DataTransformer()
         self.transformer.fit(train_data, discrete_columns)
         train_data = self.transformer.transform(train_data)
@@ -175,19 +177,18 @@ class CTGANSynthesizer(object):
             data_dim
         ).to(self.device)
 
-        #wandb.watch(self.generator, log='all')
 
         self.discriminator = Discriminator(
             data_dim + self.cond_generator.n_opt,
             self.dis_dim
         ).to(self.device)
-        #wandb.watch(self.discriminator, log='all')
+
 
         self.optimizerG = optim.Adam(
-            self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9),
+            self.generator.parameters(), lr=self.lr_G, betas=(0.5, 0.9),
             weight_decay=self.l2scale
         )
-        self.optimizerD = optim.Adam(self.discriminator.parameters(), lr=2e-4, betas=(0.5, 0.9))
+        self.optimizerD = optim.Adam(self.discriminator.parameters(), lr=self.lr_D, betas=(0.5, 0.9))
 
         assert self.batch_size % 2 == 0
         mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)
@@ -287,7 +288,7 @@ class CTGANSynthesizer(object):
             wandb.log({'epoch': i+1, 'loss_D': loss_g.detach().cpu(), 'loss_G': loss_d.detach().cpu()})
 
             # save model checkpoints every 5 epochs
-            if ((i + 1) % 10 == 0):
+            if ((i + 1) % checkpoint_interval == 0):
                 torch.save({
                     'D_state_dict': self.discriminator.state_dict(),
                     'G_state_dict': self.generator.state_dict(),
